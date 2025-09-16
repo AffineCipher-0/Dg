@@ -210,8 +210,40 @@
     </div>
 
     <script>
-        // ... (Fungsi-fungsi yang sudah ada: binaryConverter, caesarCipher, base64, vigenereCipher, generateSha256, morseConverter, atbashCipher, rot13Cipher, a1z26Converter) ...
-        
+        // Frekuensi huruf standar untuk Bahasa Indonesia (disederhanakan)
+        const INDONESIAN_FREQ = {
+            'a': 21.37, 'n': 9.69, 'i': 8.16, 'e': 8.01, 't': 6.09, 'u': 5.56, 'r': 5.43, 's': 5.25, 
+            'd': 4.79, 'k': 4.41, 'l': 3.99, 'm': 3.93, 'g': 3.19, 'p': 2.94, 'b': 2.76, 'h': 2.37, 
+            'o': 1.96, 'y': 1.62, 'j': 1.15, 'c': 0.74, 'w': 0.16, 'f': 0.14, 'v': 0.05, 'z': 0.04, 
+            'q': 0.01, 'x': 0.01
+        };
+
+        // Fungsi untuk menghitung skor kecocokan bahasa
+        function calculateLanguageScore(text) {
+            const textFreq = {};
+            let totalChars = 0;
+
+            for (const char of text.toLowerCase()) {
+                if (INDONESIAN_FREQ[char]) {
+                    textFreq[char] = (textFreq[char] || 0) + 1;
+                    totalChars++;
+                }
+            }
+            if (totalChars === 0) return Infinity;
+
+            for (const char in textFreq) {
+                textFreq[char] = (textFreq[char] / totalChars) * 100;
+            }
+
+            let score = 0;
+            for (const char in INDONESIAN_FREQ) {
+                const observed = textFreq[char] || 0;
+                const expected = INDONESIAN_FREQ[char];
+                score += Math.pow(observed - expected, 2) / expected;
+            }
+            return score;
+        }
+
         // Alat 1: Teks <-> Biner
         function binaryConverter(mode) {
             const input = document.getElementById('binaryInput').value;
@@ -451,7 +483,6 @@
 
             let resultsHTML = '';
             
-            // Helper function to escape HTML
             const escapeHTML = str => str.replace(/[&<>'"]/g, tag => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[tag]));
@@ -459,13 +490,12 @@
             // 1. Coba Base64
             try {
                 const decoded = atob(input);
-                // Cek jika hasilnya adalah teks yang bisa dibaca
                 if (/^[\x20-\x7E\s\r\n]*$/.test(decoded)) {
                     resultsHTML += `<div><strong class="text-purple-600">Kemungkinan Base64:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(decoded)}</p></div>`;
                 }
-            } catch (e) { /* Abaikan jika error, berarti bukan Base64 */ }
+            } catch (e) { /* Abaikan */ }
 
-            // 2. Coba Biner ke Teks
+            // 2. Coba Biner
             if (/^[01\s]+$/.test(input) && input.includes(' ')) {
                  try {
                     const text = input.split(' ').map(bin => { if(bin) return String.fromCharCode(parseInt(bin, 2)); return ''; }).join('');
@@ -475,7 +505,7 @@
                 } catch (e) { /* Abaikan */ }
             }
 
-            // 3. Coba Angka (A1Z26) ke Teks
+            // 3. Coba A1Z26
             if (/^[0-9\s-]+$/.test(input)) {
                 try {
                      const text = input.split(/[\s-]+/).map(num => {const n = parseInt(num); if (n >= 1 && n <= 26) {return String.fromCharCode(n + 64);} return '';}).join('');
@@ -485,7 +515,7 @@
                 } catch(e) { /* Abaikan */ }
             }
             
-            // 4. Coba Kode Morse ke Teks
+            // 4. Coba Kode Morse
             if (/^[-.\s/]+$/.test(input)) {
                 try {
                     const text = input.split(' ').map(code => reversedMorseMap[code] || '').join('');
@@ -495,7 +525,11 @@
                 } catch(e) { /* Abaikan */ }
             }
 
-            // 5. Coba Atbash
+            // 5. Coba Teks Terbalik
+            const reversedText = input.split('').reverse().join('');
+            resultsHTML += `<div><strong class="text-gray-600">Hasil Teks Terbalik:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(reversedText)}</p></div>`;
+
+            // 6. Coba Atbash
             let atbashResult = '';
             for (let i = 0; i < input.length; i++) {
                 const code = input.charCodeAt(i);
@@ -505,7 +539,7 @@
             }
             resultsHTML += `<div><strong class="text-teal-600">Hasil Atbash Cipher:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(atbashResult)}</p></div>`;
 
-            // 6. Coba ROT13
+            // 7. Coba ROT13
             let rot13Result = '';
             for (let i = 0; i < input.length; i++) {
                 const code = input.charCodeAt(i);
@@ -515,29 +549,43 @@
             }
             resultsHTML += `<div><strong class="text-pink-600">Hasil ROT13 Cipher:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(rot13Result)}</p></div>`;
 
-            // 7. Brute-force Caesar Cipher
-            let caesarResults = '';
+            // 8. Analisis Caesar Cipher dengan Frekuensi
+            let caesarCandidates = [];
             for (let shift = 1; shift <= 25; shift++) {
                 let currentResult = '';
                 for (let i = 0; i < input.length; i++) {
                     let char = input[i];
                     if (char.match(/[a-z]/i)) {
                         const code = input.charCodeAt(i);
-                        if ((code >= 65) && (code <= 90)) { // Huruf Besar
+                        if ((code >= 65) && (code <= 90)) {
                             currentResult += String.fromCharCode((code - 65 - shift + 26) % 26 + 65);
-                        } else if ((code >= 97) && (code <= 122)) { // Huruf Kecil
+                        } else if ((code >= 97) && (code <= 122)) {
                              currentResult += String.fromCharCode((code - 97 - shift + 26) % 26 + 97);
                         }
                     } else {
                         currentResult += char;
                     }
                 }
-                 caesarResults += `<p class="mt-1 p-2 bg-gray-200 rounded"><strong>Shift ${shift}:</strong> ${escapeHTML(currentResult)}</p>`;
+                const score = calculateLanguageScore(currentResult);
+                if (score !== Infinity) {
+                    caesarCandidates.push({ shift, text: currentResult, score });
+                }
             }
-            if(caesarResults) {
-                resultsHTML += `<div><strong class="text-green-600">Analisis Brute-force Caesar Cipher:</strong><div class="space-y-1 mt-1">${caesarResults}</div></div>`;
-            }
+            
+            caesarCandidates.sort((a, b) => a.score - b.score);
 
+            if (caesarCandidates.length > 0) {
+                let caesarResultsHTML = '';
+                const topN = Math.min(caesarCandidates.length, 5);
+                for(let i = 0; i < caesarCandidates.length; i++) {
+                    const candidate = caesarCandidates[i];
+                    const isTop = i < topN;
+                    const highlightClass = isTop ? 'bg-green-200 border-l-4 border-green-500' : 'bg-gray-200';
+                    const scoreText = `(Skor: ${candidate.score.toFixed(2)})`;
+                    caesarResultsHTML += `<p class="mt-1 p-2 rounded ${highlightClass}"><strong>Shift ${candidate.shift}:</strong> ${escapeHTML(candidate.text)} <span class="text-sm text-gray-600">${scoreText}</span></p>`;
+                }
+                resultsHTML += `<div><strong class="text-green-600">Analisis Caesar Cipher (Diurutkan berdasarkan kemungkinan):</strong><div class="space-y-1 mt-1">${caesarResultsHTML}</div></div>`;
+            }
 
             if (resultsHTML) {
                 outputElement.innerHTML = resultsHTML;
