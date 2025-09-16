@@ -23,6 +23,9 @@
             white-space: pre-wrap;
             min-height: 60px;
         }
+        #autoTranslateOutput p {
+            word-break: break-all;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -30,7 +33,7 @@
     <div class="container mx-auto p-4 md:p-8">
         <header class="text-center mb-10">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Pusat Kriptografi</h1>
-            <p class="text-lg text-gray-600 mt-2">Enkripsi, Dekripsi, dan Hash Teks Anda.</p>
+            <p class="text-lg text-gray-600 mt-2">Enkripsi, Dekripsi, dan Analisis Teks Anda.</p>
         </header>
 
         <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -183,6 +186,22 @@
                 </div>
             </div>
 
+            <!-- Alat 10: Penerjemah Otomatis -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card md:col-span-2 lg:col-span-3">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2 text-cyan-600">Penerjemah Otomatis</h2>
+                <div class="space-y-4">
+                    <label for="autoTranslateInput" class="block font-medium">Masukkan Teks Terenkripsi:</label>
+                    <textarea id="autoTranslateInput" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-cyan-500" placeholder="Tempel teks sandi di sini..."></textarea>
+                    <button onclick="autoTranslate()" class="w-full bg-cyan-600 text-white font-bold py-2 px-4 rounded-md hover:bg-cyan-700 transition duration-300">Analisis & Terjemahkan</button>
+                    <div>
+                        <h3 class="font-medium">Hasil Analisis:</h3>
+                        <div id="autoTranslateOutput" class="mt-2 p-3 bg-gray-100 rounded-md output space-y-3">
+                            <p class="text-gray-500">Hasil akan ditampilkan di sini setelah analisis.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
         
         <footer class="text-center mt-12 text-gray-500">
@@ -191,7 +210,7 @@
     </div>
 
     <script>
-        // ... (Fungsi-fungsi yang sudah ada: binaryConverter, caesarCipher, base64, vigenereCipher, generateSha256, morseConverter) ...
+        // ... (Fungsi-fungsi yang sudah ada: binaryConverter, caesarCipher, base64, vigenereCipher, generateSha256, morseConverter, atbashCipher, rot13Cipher, a1z26Converter) ...
         
         // Alat 1: Teks <-> Biner
         function binaryConverter(mode) {
@@ -316,14 +335,16 @@
         }
 
         // Alat 6: Kode Morse
+        const morseCodeMap = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
+            'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.',
+            'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
+            '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
+        };
+        const reversedMorseMap = Object.fromEntries(Object.entries(morseCodeMap).map(a => a.reverse()));
+        
         function morseConverter(mode) {
-            const morseCodeMap = {
-                'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
-                'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.',
-                'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-                'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
-                '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
-            };
             const input = document.getElementById('morseInput').value;
             const outputElement = document.getElementById('morseOutput');
             if (!input) {
@@ -335,7 +356,6 @@
                 if (mode === 'toMorse') {
                     outputElement.textContent = input.toUpperCase().split('').map(char => morseCodeMap[char] || char).join(' ');
                 } else { // fromMorse
-                    const reversedMorseMap = Object.fromEntries(Object.entries(morseCodeMap).map(a => a.reverse()));
                     outputElement.textContent = input.split(' ').map(code => reversedMorseMap[code] || '').join('');
                 }
             } catch(e) {
@@ -419,9 +439,113 @@
                 outputElement.textContent = 'Input tidak valid.';
             }
         }
+        
+        // Alat 10: Penerjemah Otomatis
+        function autoTranslate() {
+            const input = document.getElementById('autoTranslateInput').value;
+            const outputElement = document.getElementById('autoTranslateOutput');
+            if (!input) {
+                outputElement.innerHTML = '<p class="text-gray-500">Masukkan teks terenkripsi untuk dianalisis.</p>';
+                return;
+            }
+
+            let resultsHTML = '';
+            
+            // Helper function to escape HTML
+            const escapeHTML = str => str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+
+            // 1. Coba Base64
+            try {
+                const decoded = atob(input);
+                // Cek jika hasilnya adalah teks yang bisa dibaca
+                if (/^[\x20-\x7E\s\r\n]*$/.test(decoded)) {
+                    resultsHTML += `<div><strong class="text-purple-600">Kemungkinan Base64:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(decoded)}</p></div>`;
+                }
+            } catch (e) { /* Abaikan jika error, berarti bukan Base64 */ }
+
+            // 2. Coba Biner ke Teks
+            if (/^[01\s]+$/.test(input) && input.includes(' ')) {
+                 try {
+                    const text = input.split(' ').map(bin => { if(bin) return String.fromCharCode(parseInt(bin, 2)); return ''; }).join('');
+                    if (text) {
+                         resultsHTML += `<div><strong class="text-blue-600">Kemungkinan Biner:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(text)}</p></div>`;
+                    }
+                } catch (e) { /* Abaikan */ }
+            }
+
+            // 3. Coba Angka (A1Z26) ke Teks
+            if (/^[0-9\s-]+$/.test(input)) {
+                try {
+                     const text = input.split(/[\s-]+/).map(num => {const n = parseInt(num); if (n >= 1 && n <= 26) {return String.fromCharCode(n + 64);} return '';}).join('');
+                     if (text) {
+                        resultsHTML += `<div><strong class="text-orange-600">Kemungkinan A1Z26:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(text)}</p></div>`;
+                     }
+                } catch(e) { /* Abaikan */ }
+            }
+            
+            // 4. Coba Kode Morse ke Teks
+            if (/^[-.\s/]+$/.test(input)) {
+                try {
+                    const text = input.split(' ').map(code => reversedMorseMap[code] || '').join('');
+                    if (text) {
+                         resultsHTML += `<div><strong class="text-indigo-600">Kemungkinan Kode Morse:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(text)}</p></div>`;
+                    }
+                } catch(e) { /* Abaikan */ }
+            }
+
+            // 5. Coba Atbash
+            let atbashResult = '';
+            for (let i = 0; i < input.length; i++) {
+                const code = input.charCodeAt(i);
+                if (code >= 65 && code <= 90) { atbashResult += String.fromCharCode(90 - (code - 65)); } 
+                else if (code >= 97 && code <= 122) { atbashResult += String.fromCharCode(122 - (code - 97)); } 
+                else { atbashResult += input[i]; }
+            }
+            resultsHTML += `<div><strong class="text-teal-600">Hasil Atbash Cipher:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(atbashResult)}</p></div>`;
+
+            // 6. Coba ROT13
+            let rot13Result = '';
+            for (let i = 0; i < input.length; i++) {
+                const code = input.charCodeAt(i);
+                if (code >= 65 && code <= 90) { rot13Result += String.fromCharCode(((code - 65 + 13) % 26) + 65); } 
+                else if (code >= 97 && code <= 122) { rot13Result += String.fromCharCode(((code - 97 + 13) % 26) + 97); } 
+                else { rot13Result += input[i]; }
+            }
+            resultsHTML += `<div><strong class="text-pink-600">Hasil ROT13 Cipher:</strong><p class="mt-1 p-2 bg-gray-200 rounded">${escapeHTML(rot13Result)}</p></div>`;
+
+            // 7. Brute-force Caesar Cipher
+            let caesarResults = '';
+            for (let shift = 1; shift <= 25; shift++) {
+                let currentResult = '';
+                for (let i = 0; i < input.length; i++) {
+                    let char = input[i];
+                    if (char.match(/[a-z]/i)) {
+                        const code = input.charCodeAt(i);
+                        if ((code >= 65) && (code <= 90)) { // Huruf Besar
+                            currentResult += String.fromCharCode((code - 65 - shift + 26) % 26 + 65);
+                        } else if ((code >= 97) && (code <= 122)) { // Huruf Kecil
+                             currentResult += String.fromCharCode((code - 97 - shift + 26) % 26 + 97);
+                        }
+                    } else {
+                        currentResult += char;
+                    }
+                }
+                 caesarResults += `<p class="mt-1 p-2 bg-gray-200 rounded"><strong>Shift ${shift}:</strong> ${escapeHTML(currentResult)}</p>`;
+            }
+            if(caesarResults) {
+                resultsHTML += `<div><strong class="text-green-600">Analisis Brute-force Caesar Cipher:</strong><div class="space-y-1 mt-1">${caesarResults}</div></div>`;
+            }
+
+
+            if (resultsHTML) {
+                outputElement.innerHTML = resultsHTML;
+            } else {
+                outputElement.innerHTML = '<p class="text-gray-500">Tidak ada terjemahan yang cocok ditemukan untuk teks ini.</p>';
+            }
+        }
     </script>
 </body>
 </html>
-
-
 
