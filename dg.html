@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alat Kriptografi Lengkap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .tool-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .output {
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            min-height: 60px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Pusat Kriptografi</h1>
+            <p class="text-lg text-gray-600 mt-2">Enkripsi, Dekripsi, dan Hash Teks Anda.</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <!-- Alat 1: Teks <-> Biner -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Teks ↔ Biner</h2>
+                <div class="space-y-4">
+                    <label for="binaryInput" class="block font-medium">Masukkan Teks atau Biner:</label>
+                    <textarea id="binaryInput" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Contoh: Budi atau 01000010 01110101 01100100 01101001"></textarea>
+                    <div class="flex space-x-2">
+                        <button onclick="binaryConverter('toBinary')" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition duration-300">Teks ke Biner</button>
+                        <button onclick="binaryConverter('fromBinary')" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition duration-300">Biner ke Teks</button>
+                    </div>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="binaryOutput" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alat 2: Caesar Cipher -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Caesar Cipher</h2>
+                <div class="space-y-4">
+                    <label for="caesarInput" class="block font-medium">Masukkan Teks:</label>
+                    <textarea id="caesarInput" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500" placeholder="Teks rahasia"></textarea>
+                    <label for="caesarShift" class="block font-medium">Jumlah Geseran (Shift):</label>
+                    <input type="number" id="caesarShift" value="3" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500">
+                    <div class="flex space-x-2">
+                        <button onclick="caesarCipher('encrypt')" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition duration-300">Enkripsi</button>
+                        <button onclick="caesarCipher('decrypt')" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition duration-300">Dekripsi</button>
+                    </div>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="caesarOutput" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alat 3: Base64 Encoder/Decoder -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Base64 Encoder/Decoder</h2>
+                <div class="space-y-4">
+                    <label for="base64Input" class="block font-medium">Masukkan Teks:</label>
+                    <textarea id="base64Input" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500" placeholder="Data"></textarea>
+                    <div class="flex space-x-2">
+                        <button onclick="base64('encode')" class="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-md hover:bg-purple-700 transition duration-300">Encode</button>
+                        <button onclick="base64('decode')" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition duration-300">Decode</button>
+                    </div>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="base64Output" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alat 4: Vigenère Cipher -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Vigenère Cipher</h2>
+                <div class="space-y-4">
+                    <label for="vigenereInput" class="block font-medium">Masukkan Teks:</label>
+                    <textarea id="vigenereInput" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500" placeholder="Teks yang akan dienkripsi"></textarea>
+                    <label for="vigenereKey" class="block font-medium">Kata Kunci:</label>
+                    <input type="text" id="vigenereKey" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500" placeholder="KUNCI">
+                    <div class="flex space-x-2">
+                        <button onclick="vigenereCipher('encrypt')" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition duration-300">Enkripsi</button>
+                        <button onclick="vigenereCipher('decrypt')" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition duration-300">Dekripsi</button>
+                    </div>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="vigenereOutput" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alat 5: SHA-256 Hasher -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">SHA-256 Hasher</h2>
+                <div class="space-y-4">
+                    <label for="shaInput" class="block font-medium">Masukkan Teks:</label>
+                    <textarea id="shaInput" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500" placeholder="Teks apa saja"></textarea>
+                    <button onclick="generateSha256()" class="w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded-md hover:bg-yellow-600 transition duration-300">Buat Hash</button>
+                    <div>
+                        <h3 class="font-medium">Hasil Hash (satu arah):</h3>
+                        <p id="shaOutput" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alat 6: Kode Morse -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Teks ↔ Kode Morse</h2>
+                <div class="space-y-4">
+                    <label for="morseInput" class="block font-medium">Masukkan Teks atau Kode Morse:</label>
+                    <textarea id="morseInput" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500" placeholder="Gunakan spasi untuk pemisah huruf, dan '/' untuk pemisah kata."></textarea>
+                    <div class="flex space-x-2">
+                        <button onclick="morseConverter('toMorse')" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300">Teks ke Morse</button>
+                        <button onclick="morseConverter('fromMorse')" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition duration-300">Morse ke Teks</button>
+                    </div>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="morseOutput" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alat 7: Atbash Cipher -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Atbash Cipher</h2>
+                <div class="space-y-4">
+                    <label for="atbashInput" class="block font-medium">Masukkan Teks:</label>
+                    <textarea id="atbashInput" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500" placeholder="Teks yang akan dienkripsi/dekripsi"></textarea>
+                    <button onclick="atbashCipher()" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-700 transition duration-300">Enkripsi / Dekripsi</button>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="atbashOutput" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alat 8: ROT13 Cipher -->
+            <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">ROT13 Cipher</h2>
+                <div class="space-y-4">
+                    <label for="rot13Input" class="block font-medium">Masukkan Teks:</label>
+                    <textarea id="rot13Input" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500" placeholder="Teks yang akan dienkripsi/dekripsi"></textarea>
+                    <button onclick="rot13Cipher()" class="w-full bg-pink-600 text-white font-bold py-2 px-4 rounded-md hover:bg-pink-700 transition duration-300">Enkripsi / Dekripsi</button>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="rot13Output" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alat 9: A1Z26 Cipher -->
+             <div class="bg-white p-6 rounded-lg shadow-md tool-card">
+                <h2 class="text-2xl font-bold mb-4 border-b pb-2">Teks ↔ A1Z26</h2>
+                <div class="space-y-4">
+                    <label for="a1z26Input" class="block font-medium">Masukkan Teks atau Angka:</label>
+                    <textarea id="a1z26Input" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500" placeholder="Contoh: ABC atau 1-2-3"></textarea>
+                     <div class="flex space-x-2">
+                        <button onclick="a1z26Converter('toA1Z26')" class="w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition duration-300">Teks ke Angka</button>
+                        <button onclick="a1z26Converter('fromA1Z26')" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition duration-300">Angka ke Teks</button>
+                    </div>
+                    <div>
+                        <h3 class="font-medium">Hasil:</h3>
+                        <p id="a1z26Output" class="mt-2 p-3 bg-gray-100 rounded-md output"></p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+        
+        <footer class="text-center mt-12 text-gray-500">
+            <p>&copy; 2025 kriptografi</p>
+        </footer>
+    </div>
+
+    <script>
+        // ... (Fungsi-fungsi yang sudah ada: binaryConverter, caesarCipher, base64, vigenereCipher, generateSha256, morseConverter) ...
+        
+        // Alat 1: Teks <-> Biner
+        function binaryConverter(mode) {
+            const input = document.getElementById('binaryInput').value;
+            const outputElement = document.getElementById('binaryOutput');
+            if (!input) {
+                outputElement.textContent = 'Masukkan teks terlebih dahulu.';
+                return;
+            }
+            try {
+                if (mode === 'toBinary') {
+                    outputElement.textContent = input.split('').map(char => {
+                        return char.charCodeAt(0).toString(2).padStart(8, '0');
+                    }).join(' ');
+                } else { // fromBinary
+                    outputElement.textContent = input.split(' ').map(bin => {
+                        if(bin) return String.fromCharCode(parseInt(bin, 2));
+                        return '';
+                    }).join('');
+                }
+            } catch(e) {
+                outputElement.textContent = 'Input tidak valid untuk operasi ini.';
+            }
+        }
+
+        // Alat 2: Caesar Cipher
+        function caesarCipher(mode) {
+            const text = document.getElementById('caesarInput').value;
+            const shift = parseInt(document.getElementById('caesarShift').value);
+            const outputElement = document.getElementById('caesarOutput');
+            if (!text) {
+                outputElement.textContent = 'Masukkan teks terlebih dahulu.';
+                return;
+            }
+            if (isNaN(shift)) {
+                outputElement.textContent = 'Jumlah geseran harus berupa angka.';
+                return;
+            }
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                if (char.match(/[a-z]/i)) {
+                    const code = text.charCodeAt(i);
+                    let shiftedCode;
+                    if ((code >= 65) && (code <= 90)) { // Huruf Besar
+                        shiftedCode = (mode === 'encrypt') ? (code - 65 + shift) % 26 + 65 : (code - 65 - shift + 26*100) % 26 + 65;
+                    } else if ((code >= 97) && (code <= 122)) { // Huruf Kecil
+                        shiftedCode = (mode === 'encrypt') ? (code - 97 + shift) % 26 + 97 : (code - 97 - shift + 26*100) % 26 + 97;
+                    }
+                    result += String.fromCharCode(shiftedCode);
+                } else {
+                    result += char;
+                }
+            }
+            outputElement.textContent = result;
+        }
+
+        // Alat 3: Base64
+        function base64(mode) {
+            const input = document.getElementById('base64Input').value;
+            const outputElement = document.getElementById('base64Output');
+            if (!input) {
+                outputElement.textContent = 'Masukkan teks terlebih dahulu.';
+                return;
+            }
+            try {
+                outputElement.textContent = (mode === 'encode') ? btoa(input) : atob(input);
+            } catch (e) {
+                outputElement.textContent = 'Input tidak valid untuk operasi ini.';
+            }
+        }
+
+        // Alat 4: Vigenère Cipher
+        function vigenereCipher(mode) {
+            const text = document.getElementById('vigenereInput').value;
+            const key = document.getElementById('vigenereKey').value.toUpperCase().replace(/[^A-Z]/g, '');
+            const outputElement = document.getElementById('vigenereOutput');
+
+            if (!text || !key) {
+                outputElement.textContent = 'Teks dan Kata Kunci harus diisi.';
+                return;
+            }
+
+            let result = '';
+            let keyIndex = 0;
+            for (let i = 0; i < text.length; i++) {
+                const charCode = text.charCodeAt(i);
+                if (charCode >= 65 && charCode <= 90) { // Huruf besar
+                    const keyChar = key.charCodeAt(keyIndex % key.length) - 65;
+                    const shift = mode === 'encrypt' ? keyChar : -keyChar;
+                    result += String.fromCharCode((charCode - 65 + shift + 26) % 26 + 65);
+                    keyIndex++;
+                } else if (charCode >= 97 && charCode <= 122) { // Huruf kecil
+                    const keyChar = key.charCodeAt(keyIndex % key.length) - 65;
+                    const shift = mode === 'encrypt' ? keyChar : -keyChar;
+                    result += String.fromCharCode((charCode - 97 + shift + 26) % 26 + 97);
+                    keyIndex++;
+                } else {
+                    result += text[i];
+                }
+            }
+            outputElement.textContent = result;
+        }
+
+        // Alat 5: SHA-256 Hasher
+        async function generateSha256() {
+            const input = document.getElementById('shaInput').value;
+            const outputElement = document.getElementById('shaOutput');
+            if (!input) {
+                outputElement.textContent = 'Masukkan teks terlebih dahulu.';
+                return;
+            }
+            try {
+                const textAsBuffer = new TextEncoder().encode(input);
+                const hashBuffer = await window.crypto.subtle.digest('SHA-256', textAsBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                outputElement.textContent = hashHex;
+            } catch (e) {
+                outputElement.textContent = 'Gagal membuat hash.';
+            }
+        }
+
+        // Alat 6: Kode Morse
+        function morseConverter(mode) {
+            const morseCodeMap = {
+                'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
+                'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.',
+                'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+                'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
+                '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
+            };
+            const input = document.getElementById('morseInput').value;
+            const outputElement = document.getElementById('morseOutput');
+            if (!input) {
+                outputElement.textContent = 'Masukkan input terlebih dahulu.';
+                return;
+            }
+            
+            try {
+                if (mode === 'toMorse') {
+                    outputElement.textContent = input.toUpperCase().split('').map(char => morseCodeMap[char] || char).join(' ');
+                } else { // fromMorse
+                    const reversedMorseMap = Object.fromEntries(Object.entries(morseCodeMap).map(a => a.reverse()));
+                    outputElement.textContent = input.split(' ').map(code => reversedMorseMap[code] || '').join('');
+                }
+            } catch(e) {
+                outputElement.textContent = 'Input tidak valid.';
+            }
+        }
+
+        // Alat 7: Atbash Cipher
+        function atbashCipher() {
+            const input = document.getElementById('atbashInput').value;
+            const outputElement = document.getElementById('atbashOutput');
+            if (!input) {
+                outputElement.textContent = 'Masukkan teks terlebih dahulu.';
+                return;
+            }
+            let result = '';
+            for (let i = 0; i < input.length; i++) {
+                const code = input.charCodeAt(i);
+                if (code >= 65 && code <= 90) { // Huruf Besar
+                    result += String.fromCharCode(90 - (code - 65));
+                } else if (code >= 97 && code <= 122) { // Huruf Kecil
+                    result += String.fromCharCode(122 - (code - 97));
+                } else {
+                    result += input[i];
+                }
+            }
+            outputElement.textContent = result;
+        }
+
+        // Alat 8: ROT13 Cipher
+        function rot13Cipher() {
+            const input = document.getElementById('rot13Input').value;
+            const outputElement = document.getElementById('rot13Output');
+            if (!input) {
+                outputElement.textContent = 'Masukkan teks terlebih dahulu.';
+                return;
+            }
+            let result = '';
+            for (let i = 0; i < input.length; i++) {
+                const code = input.charCodeAt(i);
+                if (code >= 65 && code <= 90) { // Huruf Besar
+                    result += String.fromCharCode(((code - 65 + 13) % 26) + 65);
+                } else if (code >= 97 && code <= 122) { // Huruf Kecil
+                    result += String.fromCharCode(((code - 97 + 13) % 26) + 97);
+                } else {
+                    result += input[i];
+                }
+            }
+            outputElement.textContent = result;
+        }
+
+        // Alat 9: A1Z26 Cipher
+        function a1z26Converter(mode) {
+            const input = document.getElementById('a1z26Input').value;
+            const outputElement = document.getElementById('a1z26Output');
+            if (!input) {
+                outputElement.textContent = 'Masukkan input terlebih dahulu.';
+                return;
+            }
+            try {
+                if (mode === 'toA1Z26') {
+                    outputElement.textContent = input.toUpperCase().split('')
+                        .map(char => {
+                            const code = char.charCodeAt(0);
+                            if (code >= 65 && code <= 90) {
+                                return code - 64;
+                            }
+                            return ''; // Abaikan karakter non-alfabet
+                        }).filter(Boolean).join('-');
+                } else { // fromA1Z26
+                    outputElement.textContent = input.split(/[\s-]+/)
+                        .map(num => {
+                            const n = parseInt(num);
+                            if (n >= 1 && n <= 26) {
+                                return String.fromCharCode(n + 64);
+                            }
+                            return ''; // Abaikan angka tidak valid
+                        }).join('');
+                }
+            } catch(e) {
+                outputElement.textContent = 'Input tidak valid.';
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
