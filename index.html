@@ -3,286 +3,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Crypto Terminal</title>
+    <title>Buku Kriptografi Interaktif</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Cutive+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <style>
-        @keyframes flicker {
-            0%, 100% { opacity: 1; text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff; }
-            50% { opacity: 0.8; text-shadow: 0 0 5px #00ffff, 0 0 8px #00ffff; }
-        }
-        @keyframes scanline {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100%; }
-        }
-
         body {
-            font-family: 'Roboto Mono', monospace;
-            background-color: #0d1117;
-            color: #39ff14; /* Neon Green */
-            position: relative;
-            overflow-x: hidden;
+            font-family: 'Lora', serif;
+            background-color: #1a1a1a;
+            color: #d4d4d4;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
         }
-
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.3), rgba(0,0,0,0.3) 1px, transparent 1px, transparent 4px);
-            animation: scanline 20s linear infinite;
-            pointer-events: none;
-            z-index: -1;
+        .book {
+            max-width: 1200px;
+            min-height: 80vh;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-
-        .text-glow {
-            text-shadow: 0 0 3px #39ff14, 0 0 5px #39ff14;
+        .page-content {
+            background-color: #2e2e2e;
+            border-left: 1px solid #4a4a4a;
+            border-right: 1px solid #4a4a4a;
         }
-        .title-glow {
-            color: #00ffff; /* Neon Cyan */
-            text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff, 0 0 20px #00ffff;
-            animation: flicker 3s infinite;
+        .nav-tab {
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
         }
-
-        .tool-card {
-            background-color: rgba(13, 17, 23, 0.8);
-            border: 1px solid #00ffff;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .nav-tab.active {
+            color: #00e6e6;
+            border-bottom-color: #00e6e6;
+            background-color: rgba(0, 230, 230, 0.1);
         }
-        .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4), inset 0 0 15px rgba(0, 255, 255, 0.2);
+        .nav-tab:hover:not(.active) {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-bottom-color: #4b4b4b;
         }
-
+        .page-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            border-bottom: 2px solid #4a4a4a;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            color: #e5e5e5;
+        }
         textarea, input[type="text"], input[type="number"] {
-            background-color: #010409;
-            border: 1px solid #30363d;
-            color: #39ff14;
-            caret-color: #00ffff;
+            background-color: #1a1a1a;
+            border: 1px solid #4a4a4a;
+            color: #00e6e6;
         }
         textarea:focus, input:focus {
             outline: none;
-            border-color: #00ffff;
-            box-shadow: 0 0 10px #00ffff;
+            border-color: #00e6e6;
+            box-shadow: 0 0 0 2px rgba(0, 230, 230, 0.3);
         }
-        
         .output {
-            background-color: #010409;
-            border: 1px solid #30363d;
+            background-color: #222;
+            border: 1px solid #4a4a4a;
             min-height: 60px;
             word-wrap: break-word;
             white-space: pre-wrap;
+            color: #d4d4d4;
         }
-
         #attackAttempts {
-            font-family: 'Roboto Mono', monospace;
+            font-family: 'Cutive Mono', monospace;
             font-size: 0.9em;
             max-height: 150px;
             overflow-y: auto;
-            background-color: #010409;
-            color: #c9d1d9;
+            background-color: #0d0d0d;
+            color: #00e6e6;
             padding: 0.75rem;
             border-radius: 0.375rem;
-            border: 1px solid #30363d;
+            border: 1px solid #333;
         }
-
         .btn {
-            background-color: transparent;
-            border: 1px solid;
             transition: all 0.3s ease;
-            font-weight: bold;
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
+            font-weight: 600;
         }
         .btn-primary {
-            color: #00ffff;
-            border-color: #00ffff;
+            background-color: #4a4a4a;
+            color: #e5e5e5;
         }
         .btn-primary:hover {
-            background-color: rgba(0, 255, 255, 0.2);
-            box-shadow: 0 0 15px #00ffff;
+            background-color: #666;
+            color: #00e6e6;
         }
         .btn-secondary {
-            color: #f7b733; /* Amber color for secondary actions */
-            border-color: #f7b733;
+            background-color: #333;
+            color: #d4d4d4;
         }
         .btn-secondary:hover {
-            background-color: rgba(247, 183, 51, 0.2);
-            box-shadow: 0 0 15px #f7b733;
+            background-color: #444;
+            color: #00e6e6;
+        }
+        .btn-sim {
+            background-color: #004d4d;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .btn-sim:hover {
+            background-color: #006666;
+        }
+        .font-sans {
+            font-family: 'Inter', sans-serif;
         }
     </style>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 
     <div class="container mx-auto p-4 md:p-8">
-        <header class="text-center mb-12">
-            <h1 class="text-5xl md:text-6xl font-bold tracking-widest title-glow">[ CRYPTO TERMINAL ]</h1>
-            <p class="text-lg mt-4 max-w-2xl mx-auto text-glow">>_ Alat untuk analisis enkripsi dan simulasi keamanan_</p>
+        <header class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-200 tracking-tight font-sans">Kriptografi Digital</h1>
+            <p class="text-lg text-slate-400 mt-2 font-sans">Sebuah studi tentang pertahanan dan serangan dalam dunia siber.</p>
         </header>
 
-        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            <!-- Alat-alat Kriptografi -->
-            <div class="p-6 rounded-lg tool-card">
-                <h2 class="text-2xl font-bold mb-4 border-b border-cyan-500/50 pb-3 text-glow text-cyan-400">Teks ↔ Biner</h2>
-                <div class="space-y-4">
-                    <label for="binaryInput" class="block font-medium">Input:</label>
-                    <textarea id="binaryInput" rows="4" class="w-full p-2 rounded-md"></textarea>
-                    <div class="flex space-x-2">
-                        <button onclick="binaryConverter('toBinary')" class="w-full rounded-md btn btn-primary">Teks > Biner</button>
-                        <button onclick="binaryConverter('fromBinary')" class="w-full rounded-md btn btn-secondary">Biner > Teks</button>
-                    </div>
-                    <div><h3 class="font-medium">Output:</h3><p id="binaryOutput" class="mt-2 p-3 rounded-md output"></p></div>
-                </div>
-            </div>
-            <div class="p-6 rounded-lg tool-card">
-                <h2 class="text-2xl font-bold mb-4 border-b border-cyan-500/50 pb-3 text-glow text-cyan-400">Caesar Cipher</h2>
-                <div class="space-y-4">
-                    <label for="caesarInput" class="block font-medium">Input:</label>
-                    <textarea id="caesarInput" rows="4" class="w-full p-2 rounded-md"></textarea>
-                    <label for="caesarShift" class="block font-medium">Shift:</label>
-                    <input type="number" id="caesarShift" value="3" class="w-full p-2 border rounded-md">
-                    <div class="flex space-x-2">
-                        <button onclick="caesarCipher('encrypt')" class="w-full rounded-md btn btn-primary">Enkripsi</button>
-                        <button onclick="caesarCipher('decrypt')" class="w-full rounded-md btn btn-secondary">Dekripsi</button>
-                    </div>
-                    <div><h3 class="font-medium">Output:</h3><p id="caesarOutput" class="mt-2 p-3 rounded-md output"></p></div>
-                </div>
-            </div>
-             <div class="p-6 rounded-lg tool-card">
-                <h2 class="text-2xl font-bold mb-4 border-b border-cyan-500/50 pb-3 text-glow text-cyan-400">Vigenère Cipher</h2>
-                <div class="space-y-4">
-                    <label for="vigenereInput" class="block font-medium">Input:</label>
-                    <textarea id="vigenereInput" rows="4" class="w-full p-2 rounded-md"></textarea>
-                    <label for="vigenereKey" class="block font-medium">Kunci:</label>
-                    <input type="text" id="vigenereKey" class="w-full p-2 border rounded-md" placeholder="KUNCI">
-                    <div class="flex space-x-2">
-                        <button onclick="vigenereCipher('encrypt')" class="w-full rounded-md btn btn-primary">Enkripsi</button>
-                        <button onclick="vigenereCipher('decrypt')" class="w-full rounded-md btn btn-secondary">Dekripsi</button>
-                    </div>
-                    <div><h3 class="font-medium">Output:</h3><p id="vigenereOutput" class="mt-2 p-3 rounded-md output"></p></div>
-                </div>
-            </div>
-            
-            <!-- Auto-Decoder -->
-            <div class="p-6 rounded-lg tool-card md:col-span-2 lg:col-span-3">
-                <h2 class="text-2xl font-bold mb-4 border-b border-cyan-500/50 pb-3 text-glow text-cyan-400">Auto-Decoder</h2>
-                <div class="space-y-4">
-                    <label for="autoTranslateInput" class="block font-medium">Ciphertext:</label>
-                    <textarea id="autoTranslateInput" rows="4" class="w-full p-2 rounded-md"></textarea>
-                    <button onclick="autoTranslate()" class="w-full rounded-md btn btn-primary">Analisis & Dekripsi</button>
-                    <div>
-                        <h3 class="font-medium">Hasil Analisis:</h3>
-                        <div id="autoTranslateOutput" class="mt-2 p-3 rounded-md output space-y-3">
-                            <p class="text-slate-500">>_ Menunggu input untuk dianalisis...</p>
+        <div class="book bg-gray-800 rounded-lg flex flex-col mx-auto">
+            <!-- Navigasi Halaman -->
+            <nav class="flex flex-wrap justify-center bg-gray-900 rounded-t-lg border-b-2 border-gray-700">
+                <button id="tab-1" onclick="showPage(1)" class="nav-tab active flex-1 py-3 px-4 font-semibold text-center">Halaman 1: Alat</button>
+                <button id="tab-2" onclick="showPage(2)" class="nav-tab flex-1 py-3 px-4 font-semibold text-center">Halaman 2: Auto-Decoder</button>
+                <button id="tab-3" onclick="showPage(3)" class="nav-tab flex-1 py-3 px-4 font-semibold text-center">Halaman 3: Simulasi</button>
+                <button id="tab-4" onclick="showPage(4)" class="nav-tab flex-1 py-3 px-4 font-semibold text-center">Halaman 4: Pengetahuan</button>
+            </nav>
+
+            <!-- Konten Halaman -->
+            <div class="flex-grow p-6 md:p-10 page-content">
+                
+                <!-- Halaman 1: Alat Kriptografi -->
+                <div id="page-1" class="page-container">
+                    <h2 class="text-3xl page-title font-sans">Alat Kriptografi Dasar</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- Teks <-> Biner -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">Teks ↔ Biner</h3>
+                            <div class="space-y-4">
+                                <label for="binaryInput" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="binaryInput" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <div class="flex space-x-2">
+                                    <button onclick="binaryConverter('toBinary')" class="w-full rounded-md btn btn-primary py-2">Teks > Biner</button>
+                                    <button onclick="binaryConverter('fromBinary')" class="w-full rounded-md btn btn-secondary py-2">Biner > Teks</button>
+                                </div>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="binaryOutput" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- Caesar Cipher -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">Caesar Cipher</h3>
+                            <div class="space-y-4">
+                                <label for="caesarInput" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="caesarInput" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <label for="caesarShift" class="block font-medium text-gray-400">Shift:</label>
+                                <input type="number" id="caesarShift" value="3" class="w-full p-2 border rounded-md">
+                                <div class="flex space-x-2">
+                                    <button onclick="caesarCipher('encrypt')" class="w-full rounded-md btn btn-primary py-2">Enkripsi</button>
+                                    <button onclick="caesarCipher('decrypt')" class="w-full rounded-md btn btn-secondary py-2">Dekripsi</button>
+                                </div>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="caesarOutput" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- Vigenere Cipher -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">Vigenère Cipher</h3>
+                            <div class="space-y-4">
+                                <label for="vigenereInput" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="vigenereInput" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <label for="vigenereKey" class="block font-medium text-gray-400">Kunci:</label>
+                                <input type="text" id="vigenereKey" class="w-full p-2 border rounded-md" placeholder="KUNCI">
+                                <div class="flex space-x-2">
+                                    <button onclick="vigenereCipher('encrypt')" class="w-full rounded-md btn btn-primary py-2">Enkripsi</button>
+                                    <button onclick="vigenereCipher('decrypt')" class="w-full rounded-md btn btn-secondary py-2">Dekripsi</button>
+                                </div>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="vigenereOutput" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- Base64 Encoder -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">Base64 Encoder</h3>
+                            <div class="space-y-4">
+                                <label for="base64Input" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="base64Input" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <div class="flex space-x-2">
+                                    <button onclick="base64('encode')" class="w-full rounded-md btn btn-primary py-2">Encode</button>
+                                    <button onclick="base64('decode')" class="w-full rounded-md btn btn-secondary py-2">Decode</button>
+                                </div>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="base64Output" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- SHA-256 Hasher -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">SHA-256 Hasher</h3>
+                            <div class="space-y-4">
+                                <label for="shaInput" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="shaInput" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <button onclick="generateSha256()" class="w-full rounded-md btn btn-primary py-2">Buat Hash</button>
+                                <div><h3 class="font-medium text-gray-400">Output (Satu Arah):</h3><p id="shaOutput" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- Kode Morse -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">Kode Morse</h3>
+                            <div class="space-y-4">
+                                <label for="morseInput" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="morseInput" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <div class="flex space-x-2">
+                                    <button onclick="morseConverter('toMorse')" class="w-full rounded-md btn btn-primary py-2">Teks > Morse</button>
+                                    <button onclick="morseConverter('fromMorse')" class="w-full rounded-md btn btn-secondary py-2">Morse > Teks</button>
+                                </div>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="morseOutput" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- Atbash Cipher -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">Atbash Cipher</h3>
+                            <div class="space-y-4">
+                                <label for="atbashInput" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="atbashInput" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <button onclick="atbashCipher()" class="w-full rounded-md btn btn-primary py-2">Enkripsi / Dekripsi</button>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="atbashOutput" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- ROT13 Cipher -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">ROT13 Cipher</h3>
+                            <div class="space-y-4">
+                                <label for="rot13Input" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="rot13Input" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <button onclick="rot13Cipher()" class="w-full rounded-md btn btn-primary py-2">Enkripsi / Dekripsi</button>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="rot13Output" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
+                        </div>
+                        <!-- A1Z26 Cipher -->
+                        <div class="p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-200 font-sans">A1Z26 Cipher</h3>
+                            <div class="space-y-4">
+                                <label for="a1z26Input" class="block font-medium text-gray-400">Input:</label>
+                                <textarea id="a1z26Input" rows="4" class="w-full p-2 rounded-md"></textarea>
+                                <div class="flex space-x-2">
+                                    <button onclick="a1z26Converter('toA1Z26')" class="w-full rounded-md btn btn-primary py-2">Teks > Angka</button>
+                                    <button onclick="a1z26Converter('fromA1Z26')" class="w-full rounded-md btn btn-secondary py-2">Angka > Teks</button>
+                                </div>
+                                <div><h3 class="font-medium text-gray-400">Output:</h3><p id="a1z26Output" class="mt-2 p-3 rounded-md output"></p></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Modul Simulasi Serangan -->
-            <div class="p-6 rounded-lg tool-card md:col-span-2 lg:col-span-3">
-                <h2 class="text-2xl font-bold mb-4 border-b border-red-500/50 pb-3 text-red-500" style="text-shadow: 0 0 5px #ff0000;">Simulasi Serangan Kata Sandi</h2>
-                <div class="space-y-4">
-                    <label for="passwordInput" class="block font-medium">Target (maks 5 char):</label>
-                    <input type="text" id="passwordInput" maxlength="5" class="w-full p-2 rounded-md" placeholder="test">
-                    
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                         <button onclick="simulateAttack('brute')" class="w-full bg-transparent border border-red-500 text-red-500 font-bold py-2 px-4 rounded-md hover:bg-red-500/20 transition duration-300">Brute-Force</button>
-                         <button onclick="simulateAttack('dict')" class="w-full bg-transparent border border-orange-500 text-orange-500 font-bold py-2 px-4 rounded-md hover:bg-orange-500/20 transition duration-300">Kamus</button>
-                         <button onclick="simulateAttack('algebraic')" class="w-full bg-transparent border border-indigo-500 text-indigo-500 font-bold py-2 px-4 rounded-md hover:bg-indigo-500/20 transition duration-300">Aljabar</button>
-                         <button onclick="simulateAttack('birthday')" class="w-full bg-transparent border border-purple-500 text-purple-500 font-bold py-2 px-4 rounded-md hover:bg-purple-500/20 transition duration-300">Birthday</button>
-                         <button onclick="stopSimulation()" class="w-full bg-transparent border border-slate-500 text-slate-500 font-bold py-2 px-4 rounded-md hover:bg-slate-500/20 transition duration-300">Berhenti</button>
-                    </div>
 
-                    <div><h3 class="font-medium">Log Percobaan:</h3><div id="attackAttempts" class="mt-2"><span class="text-slate-500">>_ Menunggu simulasi...</span></div></div>
-                    <div><h3 class="font-medium">Hasil:</h3><div id="attackResult" class="mt-2 p-3 rounded-md output"></div></div>
+                <!-- Halaman 2: Auto-Decoder -->
+                <div id="page-2" class="page-container hidden">
+                    <h2 class="text-3xl page-title font-sans">Auto-Decoder</h2>
+                    <div class="max-w-2xl mx-auto p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                        <div class="space-y-4">
+                            <p class="text-gray-400">Masukkan teks terenkripsi di bawah ini, dan alat ini akan mencoba menganalisis dan mendekripsinya secara otomatis menggunakan metode-metode umum.</p>
+                            <label for="autoTranslateInput" class="block font-medium text-gray-400">Ciphertext:</label>
+                            <textarea id="autoTranslateInput" rows="5" class="w-full p-2 rounded-md"></textarea>
+                            <button onclick="autoTranslate()" class="w-full rounded-md btn btn-primary py-2">Analisis & Dekripsi</button>
+                            <div>
+                                <h3 class="font-medium text-gray-400">Hasil Analisis:</h3>
+                                <div id="autoTranslateOutput" class="mt-2 p-3 rounded-md output space-y-3">
+                                    <p class="text-gray-500">Menunggu input untuk dianalisis...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Modul Pengetahuan -->
-            <div class="p-6 rounded-lg tool-card md:col-span-2 lg:col-span-3">
-                <h2 class="text-2xl font-bold mb-4 border-b border-green-500/50 pb-3 text-green-400 text-glow">Modul Pengetahuan: Vektor Serangan Kriptografi</h2>
-                <div class="space-y-6 text-slate-300">
-                    
-                    <div class="border-t border-cyan-500/30 pt-4">
-                        <h3 class="text-xl font-bold text-cyan-400">I. Serangan Kriptanalisis (Menyerang Matematika)</h3>
-                        <p class="mt-2 text-slate-400">Serangan ini menargetkan kelemahan pada desain matematis dari algoritma enkripsi itu sendiri, seringkali dengan model penyerang yang spesifik (misalnya, hanya memiliki ciphertext atau dapat memilih plaintext).</p>
-                        <ul class="list-disc list-inside space-y-2 pl-4 mt-2 text-slate-400">
-                            <li><b>Ciphertext-Only:</b> Penyerang hanya memiliki ciphertext dan mencoba menemukan kunci atau plaintext melalui analisis statistik (efektif pada sandi klasik).</li>
-                            <li><b>Adaptive Chosen-Plaintext/Ciphertext:</b> Penyerang secara interaktif memilih plaintext/ciphertext untuk dienkripsi/dekripsi dan menganalisis hasilnya untuk mengungkap rahasia.</li>
-                             <li><b>Differential & Linear:</b> Menganalisis jutaan pasangan data untuk menemukan korelasi statistik yang membocorkan kunci. Termasuk varian seperti *Impossible Differential* dan *Integral Attack*.</li>
-                            <li><b>Meet-in-the-Middle:</b> Menyerang enkripsi berlapis (misal: 2DES) dengan bekerja dari dua arah untuk mengurangi waktu pencarian kunci secara drastis.</li>
-                            <li><b>Related-Key & Slide Attack:</b> Mengeksploitasi hubungan matematis antara beberapa kunci, atau struktur *round* yang identik pada sebuah cipher.</li>
-                            <li><b>Lattice-based & Number Theory:</b> Menggunakan matematika tingkat lanjut untuk memecahkan kriptografi kunci publik (seperti RSA) jika parameternya lemah atau informasinya bocor.</li>
-                        </ul>
+                <!-- Halaman 3: Simulasi -->
+                <div id="page-3" class="page-container hidden">
+                    <h2 class="text-3xl page-title font-sans">Simulasi Serangan Kata Sandi</h2>
+                    <div class="max-w-4xl mx-auto p-6 bg-gray-900/50 rounded-lg border border-gray-700">
+                        <div class="space-y-4">
+                            <p class="text-gray-400">Alat ini mensimulasikan bagaimana serangan terhadap kata sandi bekerja. Masukkan kata sandi singkat (maks 5 karakter) untuk melihat seberapa cepat ia bisa ditemukan.</p>
+                            <label for="passwordInput" class="block font-medium text-gray-400">Target:</label>
+                            <input type="text" id="passwordInput" maxlength="5" class="w-full p-2 rounded-md" placeholder="test">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <button onclick="simulateAttack('brute')" class="w-full bg-red-800 text-white font-bold py-2 px-4 rounded-md hover:bg-red-900 transition duration-300">Brute-Force</button>
+                                <button onclick="simulateAttack('dict')" class="w-full bg-orange-700 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-800 transition duration-300">Kamus</button>
+                                <button onclick="simulateAttack('algebraic')" class="w-full bg-indigo-700 text-white font-bold py-2 px-4 rounded-md hover:bg-indigo-800 transition duration-300">Aljabar</button>
+                                <button onclick="simulateAttack('birthday')" class="w-full bg-purple-700 text-white font-bold py-2 px-4 rounded-md hover:bg-purple-800 transition duration-300">Birthday Attack</button>
+                                <button onclick="simulateAttack('rainbow')" class="w-full bg-teal-800 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-900 transition duration-300">Rainbow Table</button>
+                                <button onclick="stopAllSimulations()" class="w-full bg-gray-600 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-700 transition duration-300">Berhenti</button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2"><b>Catatan:</b> Simulasi "Birthday Attack" tidak memerlukan input kata sandi. Ia akan mencari dua string acak yang menghasilkan hash yang sama.</p>
+                            <div><h3 class="font-medium text-gray-400">Log Percobaan:</h3><div id="attackAttempts" class="mt-2"><span class="text-gray-500">>_ Menunggu simulasi...</span></div></div>
+                            <div><h3 class="font-medium text-gray-400">Hasil:</h3><div id="attackResult" class="mt-2 p-3 rounded-md output"></div></div>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="border-t border-cyan-500/30 pt-4">
-                        <h3 class="text-xl font-bold text-cyan-400">II. Serangan Side-Channel & Fisik (Menyerang Implementasi)</h3>
-                        <p class="mt-2 text-slate-400">Serangan ini tidak menargetkan matematika, melainkan kebocoran informasi dari implementasi fisik atau perangkat lunak.</p>
-                         <ul class="list-disc list-inside space-y-2 pl-4 mt-2 text-slate-400">
-                            <li><b>Timing, Power & EM Analysis:</b> Mengukur waktu eksekusi, konsumsi daya, atau radiasi EM perangkat untuk menyimpulkan data rahasia. Sering diperkuat dengan *Template Attacks* dan Machine Learning.</li>
+                <!-- Halaman 4: Modul Pengetahuan -->
+                <div id="page-4" class="page-container hidden">
+                    <h2 class="text-3xl page-title font-sans">Modul Pengetahuan: Vektor Serangan Kriptografi</h2>
+                    <div class="prose max-w-none text-gray-400">
+                        <div class="bg-gray-700/50 border-l-4 border-gray-500 p-4 rounded-r-lg mb-6">
+                            <p class="font-bold text-gray-200">Prolog:</p>
+                            <p class="text-gray-400">Keamanan sebuah sistem kriptografi tidak hanya bergantung pada kekuatan algoritma matematiknya, tetapi juga pada implementasi, protokol, dan lingkungan di mana ia digunakan. Halaman ini menjelaskan berbagai cara sebuah sistem dapat diserang.</p>
+                        </div>
+                        
+                        <h4>I. Serangan Kriptanalisis (Menyerang Matematika)</h4>
+                        <p>Serangan ini menargetkan kelemahan pada desain matematis dari algoritma enkripsi itu sendiri, seringkali dengan model penyerang yang spesifik.</p>
+                        <ul>
+                            <li><b>Ciphertext-Only:</b> Penyerang hanya memiliki ciphertext dan mencoba menemukan kunci atau plaintext melalui analisis statistik.</li>
+                            <li><b>Adaptive Chosen-Plaintext/Ciphertext:</b> Penyerang secara interaktif memilih plaintext/ciphertext untuk dienkripsi/dekripsi untuk mengungkap rahasia.</li>
+                            <li><b>Differential & Linear:</b> Menganalisis jutaan pasangan data untuk menemukan korelasi statistik yang membocorkan kunci.</li>
+                            <li><b>Meet-in-the-Middle:</b> Menyerang enkripsi berlapis (misal: 2DES) dengan bekerja dari dua arah untuk mengurangi waktu pencarian.</li>
+                            <li><b>Related-Key & Slide Attack:</b> Mengeksploitasi hubungan matematis antara beberapa kunci, atau struktur yang identik pada sebuah cipher.</li>
+                        </ul>
+
+                        <h4>II. Serangan Side-Channel & Fisik (Menyerang Implementasi)</h4>
+                        <p>Serangan ini tidak menargetkan matematika, melainkan kebocoran informasi dari implementasi fisik atau perangkat lunak.</p>
+                        <ul>
+                            <li><b>Timing, Power & EM Analysis:</b> Mengukur waktu eksekusi, konsumsi daya, atau radiasi EM perangkat untuk menyimpulkan data rahasia.</li>
                             <li><b>Fault Injection:</b> Sengaja memasukkan kesalahan (misalnya, glitch tegangan) untuk menghasilkan output salah yang mengungkap informasi.</li>
-                            <li><b>Cache & Microarchitectural (Spectre-style):</b> Mengeksploitasi cara kerja cache CPU dan *speculative execution* untuk membaca memori yang seharusnya tidak dapat diakses.</li>
-                            <li><b>Akses Fisik (Evil Maid & Cold Boot):</b> Memodifikasi perangkat saat pemilik tidak ada (Evil Maid), atau mengambil sisa data kunci dari memori (RAM) sesaat setelah perangkat dimatikan (Cold Boot).</li>
-                             <li><b>Key Extraction via Debug Ports:</b> Menggunakan antarmuka debug (seperti JTAG) yang tidak diamankan untuk membaca memori dan mengekstrak kunci.</li>
+                            <li><b>Cache & Microarchitectural (Spectre-style):</b> Mengeksploitasi cara kerja cache CPU dan speculative execution untuk membaca memori yang seharusnya tidak dapat diakses.</li>
+                            <li><b>Akses Fisik (Evil Maid & Cold Boot):</b> Memodifikasi perangkat saat pemilik tidak ada (Evil Maid), atau mengambil sisa data kunci dari RAM sesaat setelah perangkat dimatikan (Cold Boot).</li>
                         </ul>
-                    </div>
 
-                    <div class="border-t border-cyan-500/30 pt-4">
-                        <h3 class="text-xl font-bold text-cyan-400">III. Serangan Protokol & Aplikasi (Menyerang Logika)</h3>
-                        <p class="mt-2 text-slate-400">Serangan ini menargetkan kelemahan pada cara protokol kriptografi digunakan, digabungkan, atau diimplementasikan dalam aplikasi.</p>
-                         <ul class="list-disc list-inside space-y-2 pl-4 mt-2 text-slate-400">
-                             <li><b>Man-in-the-Middle (MITM):</b> Menyadap dan memodifikasi komunikasi antara dua pihak yang mengira mereka berkomunikasi secara langsung.</li>
-                             <li><b>Replay & Downgrade:</b> Mengirim ulang pesan yang sah untuk memicu aksi (Replay), atau memaksa sistem untuk menggunakan protokol versi lama yang lebih lemah (Downgrade).</li>
-                             <li><b>"Oracle" Attacks (Padding & Compression):</b> Mengeksploitasi kebocoran informasi dari server, seperti pesan galat "padding salah" (*Padding Oracle*) atau perubahan ukuran data akibat kompresi (*CRIME/BREACH*).</li>
-                             <li><b>Inisialisasi Lemah:</b> Menggunakan ulang nilai *nonce/IV* atau menggunakan nilai yang dapat diprediksi, yang dapat menghancurkan keamanan stream cipher dan beberapa mode blok.</li>
-                             <li><b>Credential Stuffing & Offline Cracking:</b> Menggunakan daftar kredensial yang bocor untuk mencoba masuk ke situs lain (Stuffing), atau memecahkan hash kata sandi yang dicuri menggunakan *rainbow tables* (Offline Cracking).</li>
+                        <h4>III. Serangan Protokol & Aplikasi (Menyerang Logika)</h4>
+                        <p>Serangan ini menargetkan kelemahan pada cara protokol kriptografi digunakan, digabungkan, atau diimplementasikan dalam aplikasi.</p>
+                        <ul>
+                            <li><b>Man-in-the-Middle (MITM):</b> Menyadap dan memodifikasi komunikasi antara dua pihak.</li>
+                            <li><b>Replay & Downgrade:</b> Mengirim ulang pesan yang sah (Replay), atau memaksa sistem menggunakan protokol versi lama yang lebih lemah (Downgrade).</li>
+                            <li><b>"Oracle" Attacks (Padding & Compression):</b> Mengeksploitasi kebocoran informasi dari server, seperti pesan galat "padding salah" atau perubahan ukuran data akibat kompresi.</li>
+                            <li><b>Credential Stuffing & Offline Cracking:</b> Menggunakan kredensial yang bocor untuk masuk ke situs lain (Stuffing), atau memecahkan hash kata sandi yang dicuri (Offline Cracking).</li>
                         </ul>
-                    </div>
-                     <div class="border-t border-cyan-500/30 pt-4">
-                        <h3 class="text-xl font-bold text-cyan-400">IV. Serangan Metadata & Anonimitas</h3>
-                         <ul class="list-disc list-inside space-y-2 pl-4 mt-2 text-slate-400">
-                            <li><b>Traffic Analysis:</b> Menganalisis pola lalu lintas jaringan (kapan, ke mana, berapa banyak) untuk menyimpulkan informasi bahkan ketika kontennya dienkripsi.</li>
-                            <li><b>Deanonymization / Intersection Attack:</b> Menggabungkan beberapa set data anonim untuk mengidentifikasi ulang individu, sering digunakan untuk menargetkan pengguna Tor atau VPN.</li>
-                        </ul>
-                    </div>
 
-                     <div class="border-t border-cyan-500/30 pt-4">
-                        <h3 class="text-xl font-bold text-cyan-400">V. Ancaman Masa Depan & Lanjutan</h3>
-                         <ul class="list-disc list-inside space-y-2 pl-4 mt-2 text-slate-400">
+                        <h4>IV. Ancaman Masa Depan & Lanjutan</h4>
+                          <ul>
                             <li><b>Machine Learning / Neural Cryptanalysis:</b> Menggunakan AI untuk menemukan hubungan kompleks atau kelemahan yang tidak terlihat oleh analis manusia.</li>
-                            <li><b>Quantum Computing:</b> Secara teoretis, Algoritma Shor dapat memecahkan kriptografi kunci publik (RSA/ECC), sementara Algoritma Grover dapat mempercepat serangan brute-force. Ini mendorong pengembangan kriptografi pasca-kuantum.</li>
-                        </ul>
-                    </div>
-
-                     <div class="mt-4 p-3 bg-green-900/30 border-l-4 border-green-500 rounded-r-lg">
-                        <p class="font-bold text-green-300">>_ INTEL:</p>
-                        <p class="text-slate-400">Algoritma modern seperti AES-256 dan SHA-3, serta protokol seperti TLS 1.3, dirancang untuk tahan terhadap mayoritas serangan ini. Keamanan sistem tidak hanya bergantung pada matematika yang kuat, tetapi juga pada implementasi yang aman.</p>
+                            <li><b>Quantum Computing:</b> Secara teoretis, Algoritma Shor dapat memecahkan kriptografi kunci publik (RSA/ECC), mendorong pengembangan kriptografi pasca-kuantum.</li>
+                          </ul>
                     </div>
                 </div>
+
             </div>
-        </main>
-        
-        <footer class="text-center mt-16 text-slate-500 text-sm">
-            <p>&copy; 2025 Crypto Terminal // Disconnect when finished</p>
-        </footer>
+
+            <!-- Footer Buku -->
+            <div class="flex justify-between items-center bg-gray-900 rounded-b-lg border-t-2 border-gray-700 p-4">
+                <button id="prevBtn" onclick="navigatePage(-1)" class="btn btn-secondary px-6 py-2 rounded-md disabled:opacity-50" disabled>&lt; Sebelumnya</button>
+                <div class="text-gray-400 font-semibold">
+                    Halaman <span id="currentPageNum">1</span> dari 4
+                </div>
+                <button id="nextBtn" onclick="navigatePage(1)" class="btn btn-secondary px-6 py-2 rounded-md disabled:opacity-50">Selanjutnya &gt;</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Frekuensi huruf standar untuk Bahasa Indonesia (disederhanakan)
-        const INDONESIAN_FREQ = { 'a': 21.37, 'n': 9.69, 'i': 8.16, 'e': 8.01, 't': 6.09, 'u': 5.56, 'r': 5.43, 's': 5.25, 'd': 4.79, 'k': 4.41, 'l': 3.99, 'm': 3.93, 'g': 3.19, 'p': 2.94, 'b': 2.76, 'h': 2.37, 'o': 1.96, 'y': 1.62, 'j': 1.15, 'c': 0.74, 'w': 0.16, 'f': 0.14, 'v': 0.05, 'z': 0.04, 'q': 0.01, 'x': 0.01 };
+        // State management untuk navigasi halaman
+        let currentPage = 1;
+        const totalPages = 4;
+        let bruteForceInterval;
+        let dictInterval;
+        let birthdayTimeout; // Global variable to manage the timeout
+        let pyodide = null;
+        let pyodideReady = false;
+        
+        async function initPyodide() {
+            if (pyodideReady) return;
+            const outputEl = document.getElementById('attackResult');
+            outputEl.innerHTML = `<p class="text-blue-400">Memuat Pyodide untuk simulasi yang lebih akurat...</p>`;
+            try {
+                pyodide = await loadPyodide();
+                await pyodide.runPythonAsync(`
+                    import string
+                    import itertools
+                    
+                    def simulate_brute_force_py(password_target, max_len=5):
+                        """
+                        Simulates a brute-force attack to find a password.
+                        Returns a list of all guesses up to the found password.
+                        """
+                        charset = string.ascii_lowercase + string.digits
+                        guesses = []
+                        
+                        for length in range(1, max_len + 1):
+                            for p in itertools.product(charset, repeat=length):
+                                guess = "".join(p)
+                                guesses.append(guess)
+                                if guess == password_target:
+                                    return {'found': True, 'guesses': guesses}
 
+                        return {'found': False, 'guesses': guesses}
+                `);
+                pyodideReady = true;
+                outputEl.innerHTML = `<p class="text-green-400">Pyodide siap. Simulasi akan lebih akurat.</p>`;
+            } catch (error) {
+                console.error("Pyodide loading failed:", error);
+                outputEl.innerHTML = `<p class="text-red-400">ERROR: Gagal memuat Pyodide. Coba muat ulang halaman.</p>`;
+            }
+        }
+
+        function showPage(pageNumber) {
+            currentPage = pageNumber;
+            stopAllSimulations(); // Menghentikan simulasi jika pengguna pindah halaman
+            document.querySelectorAll('.page-container').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${pageNumber}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${pageNumber}`).classList.add('active');
+
+            document.getElementById('currentPageNum').textContent = pageNumber;
+            document.getElementById('prevBtn').disabled = (pageNumber === 1);
+            document.getElementById('nextBtn').disabled = (pageNumber === totalPages);
+        }
+
+        function navigatePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                showPage(newPage);
+            }
+        }
+        
+        // --- Fungsi Kripto ---
+        const INDONESIAN_FREQ = { 'a': 21.37, 'n': 9.69, 'i': 8.16, 'e': 8.01, 't': 6.09, 'u': 5.56, 'r': 5.43, 's': 5.25, 'd': 4.79, 'k': 4.41, 'l': 3.99, 'm': 3.93, 'g': 3.19, 'p': 2.94, 'b': 2.76, 'h': 2.37, 'o': 1.96, 'y': 1.62, 'j': 1.15, 'c': 0.74, 'w': 0.16, 'f': 0.14, 'v': 0.05, 'z': 0.04, 'q': 0.01, 'x': 0.01 };
         function calculateLanguageScore(text) {
             const textFreq = {}; let totalChars = 0;
             for (const char of text.toLowerCase()) { if (INDONESIAN_FREQ[char]) { textFreq[char] = (textFreq[char] || 0) + 1; totalChars++; } }
@@ -292,33 +425,30 @@
             for (const char in INDONESIAN_FREQ) { const observed = textFreq[char] || 0; const expected = INDONESIAN_FREQ[char]; score += Math.pow(observed - expected, 2) / expected; }
             return score;
         }
-
         function binaryConverter(mode) {
             const input = document.getElementById('binaryInput').value; const outputElement = document.getElementById('binaryOutput');
-            if (!input) { outputElement.textContent = '>_ NO INPUT DETECTED.'; return; }
-            try { if (mode === 'toBinary') { outputElement.textContent = input.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' '); } else { outputElement.textContent = input.split(' ').map(bin => bin ? String.fromCharCode(parseInt(bin, 2)) : '').join(''); } } catch(e) { outputElement.textContent = 'ERROR: Invalid binary string.'; }
+            if (!input) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            try { if (mode === 'toBinary') { outputElement.textContent = input.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' '); } else { outputElement.textContent = input.split(' ').map(bin => bin ? String.fromCharCode(parseInt(bin, 2)) : '').join(''); } } catch(e) { outputElement.textContent = 'ERROR: String biner tidak valid.'; }
         }
-
         function caesarCipher(mode) {
             const text = document.getElementById('caesarInput').value; const shift = parseInt(document.getElementById('caesarShift').value); const outputElement = document.getElementById('caesarOutput');
-            if (!text) { outputElement.textContent = '>_ NO INPUT DETECTED.'; return; }
-            if (isNaN(shift)) { outputElement.textContent = 'ERROR: Shift value must be numeric.'; return; }
+            if (!text) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            if (isNaN(shift)) { outputElement.textContent = 'ERROR: Nilai shift harus angka.'; return; }
             let result = '';
             for (let i = 0; i < text.length; i++) {
                 let char = text[i];
                 if (char.match(/[a-z]/i)) {
                     const code = text.charCodeAt(i); let shiftedCode;
-                    if ((code >= 65) && (code <= 90)) { shiftedCode = (mode === 'encrypt') ? (code - 65 + shift) % 26 + 65 : (code - 65 - shift + 26*100) % 26 + 65; } 
-                    else if ((code >= 97) && (code <= 122)) { shiftedCode = (mode === 'encrypt') ? (code - 97 + shift) % 26 + 97 : (code - 97 - shift + 26*100) % 26 + 97; }
+                    if ((code >= 65) && (code <= 90)) { shiftedCode = (mode === 'encrypt') ? (code - 65 + shift) % 26 + 65 : (code - 65 - shift + 26*100) % 26 + 65; }
+                    else if ((code >= 97) && (code <= 122)) { shiftedCode = (mode === 'encrypt') ? ((code - 97 + shift) % 26) + 97 : ((code - 97 - shift + 26*100) % 26) + 97; }
                     result += String.fromCharCode(shiftedCode);
                 } else { result += char; }
             }
             outputElement.textContent = result;
         }
-
         function vigenereCipher(mode) {
             const text = document.getElementById('vigenereInput').value; const key = document.getElementById('vigenereKey').value.toUpperCase().replace(/[^A-Z]/g, ''); const outputElement = document.getElementById('vigenereOutput');
-            if (!text || !key) { outputElement.textContent = 'ERROR: Text and Key required.'; return; }
+            if (!text || !key) { outputElement.textContent = 'ERROR: Teks dan Kunci dibutuhkan.'; return; }
             let result = ''; let keyIndex = 0;
             for (let i = 0; i < text.length; i++) {
                 const charCode = text.charCodeAt(i); const isUpper = charCode >= 65 && charCode <= 90; const isLower = charCode >= 97 && charCode <= 122;
@@ -329,111 +459,335 @@
             }
             outputElement.textContent = result;
         }
-        
+        function base64(mode) {
+            const input = document.getElementById('base64Input').value;
+            const outputElement = document.getElementById('base64Output');
+            if (!input) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            try {
+                outputElement.textContent = (mode === 'encode') ? btoa(input) : atob(input);
+            } catch (e) {
+                outputElement.textContent = 'ERROR: Input tidak valid untuk Base64.';
+            }
+        }
+        async function getSha256(text) {
+            const textAsBuffer = new TextEncoder().encode(text);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', textAsBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        async function generateSha256() {
+            const input = document.getElementById('shaInput').value;
+            const outputElement = document.getElementById('shaOutput');
+            if (!input) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            try {
+                outputElement.textContent = await getSha256(input);
+            } catch (e) {
+                outputElement.textContent = 'Gagal membuat hash.';
+            }
+        }
+        const morseCodeMap = {'A':'.-','B':'-...','C':'-.-.','D':'-..','E':'.','F':'..-.','G':'--.','H':'....','I':'..','J':'.---','K':'-.-','L':'.-..','M':'--','N':'-.','O':'---','P':'.--.','Q':'--.-','R':'.-.','S':'...','T':'-','U':'..-','V':'...-','W':'.--','X':'-..-','Y':'-.--','Z':'--..','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....','6':'-....','7':'--...','8':'---..','9':'----.','0':'-----', ' ':'/'};
+        const reversedMorseMap = Object.fromEntries(Object.entries(morseCodeMap).map(a => a.reverse()));
+        function morseConverter(mode) {
+            const input = document.getElementById('morseInput').value;
+            const outputElement = document.getElementById('morseOutput');
+            if (!input) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            try {
+                if (mode === 'toMorse') {
+                    outputElement.textContent = input.toUpperCase().split('').map(char => morseCodeMap[char] || '').join(' ');
+                } else {
+                    outputElement.textContent = input.split(' ').map(code => reversedMorseMap[code] || '').join('');
+                }
+            } catch (e) {
+                outputElement.textContent = 'ERROR: Kode Morse tidak valid.';
+            }
+        }
+        function atbashCipher() {
+            const input = document.getElementById('atbashInput').value;
+            const outputElement = document.getElementById('atbashOutput');
+            if (!input) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            let result = '';
+            for (let i = 0; i < input.length; i++) {
+                const code = input.charCodeAt(i);
+                if (code >= 65 && code <= 90) { result += String.fromCharCode(90 - (code - 65)); }
+                else if (code >= 97 && code <= 122) { result += String.fromCharCode(122 - (code - 97)); }
+                else { result += input[i]; }
+            }
+            outputElement.textContent = result;
+        }
+        function rot13Cipher() {
+            const input = document.getElementById('rot13Input').value;
+            const outputElement = document.getElementById('rot13Output');
+            if (!input) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            let result = '';
+            for (let i = 0; i < input.length; i++) {
+                const code = input.charCodeAt(i);
+                if (code >= 65 && code <= 90) { result += String.fromCharCode(((code - 65 + 13) % 26) + 65); }
+                else if (code >= 97 && code <= 122) { result += String.fromCharCode(((code - 97 + 13) % 26) + 97); }
+                else { result += input[i]; }
+            }
+            outputElement.textContent = result;
+        }
+        function a1z26Converter(mode) {
+            const input = document.getElementById('a1z26Input').value;
+            const outputElement = document.getElementById('a1z26Output');
+            if (!input) { outputElement.textContent = 'Tidak ada input terdeteksi.'; return; }
+            try {
+                if (mode === 'toA1Z26') {
+                    outputElement.textContent = input.toUpperCase().split('').map(char => { const code = char.charCodeAt(0); return (code >= 65 && code <= 90) ? code - 64 : ''; }).filter(Boolean).join('-');
+                } else {
+                    outputElement.textContent = input.split(/[\s-]+/).map(num => { const n = parseInt(num); return (n >= 1 && n <= 26) ? String.fromCharCode(n + 64) : ''; }).join('');
+                }
+            } catch (e) {
+                outputElement.textContent = 'ERROR: Input tidak valid.';
+            }
+        }
         function autoTranslate() {
             const input = document.getElementById('autoTranslateInput').value.trim(); const outputElement = document.getElementById('autoTranslateOutput');
-            if (!input) { outputElement.innerHTML = '<p class="text-slate-500">>_ Menunggu input untuk dianalisis...</p>'; return; }
-            outputElement.innerHTML = '<p class="text-cyan-400">>_ Menganalisis stream data...</p>';
+            if (!input) { outputElement.innerHTML = '<p class="text-gray-500">Menunggu input untuk dianalisis...</p>'; return; }
+            outputElement.innerHTML = '<p class="text-blue-400">Menganalisis...</p>';
             setTimeout(() => {
                 let results = [];
                 let bestCaesar = { shift: -1, score: Infinity, text: '' };
                 for (let i = 1; i < 26; i++) {
                     let decrypted = '';
                     for (let j = 0; j < input.length; j++) {
-                        let char = input[j]; if (char.match(/[a-z]/i)) { const code = input.charCodeAt(j); let shiftedCode; if ((code >= 65) && (code <= 90)) { shiftedCode = (code - 65 - i + 26) % 26 + 65; } else if ((code >= 97) && (code <= 122)) { shiftedCode = (code - 97 - i + 26) % 26 + 97; } decrypted += String.fromCharCode(shiftedCode); } else { decrypted += char; }
+                        let char = input[j]; if (char.match(/[a-z]/i)) { const code = input.charCodeAt(j); let shiftedCode; if ((code >= 65) && (code <= 90)) { shiftedCode = ((code - 65 - i + 26) % 26) + 65; } else if ((code >= 97) && (code <= 122)) { shiftedCode = ((code - 97 - i + 26) % 26) + 97; } decrypted += String.fromCharCode(shiftedCode); } else { decrypted += char; }
                     }
                     const score = calculateLanguageScore(decrypted); if (score < bestCaesar.score) { bestCaesar = { shift: i, score: score, text: decrypted }; }
                 }
                 if(bestCaesar.score < 500) { const name = bestCaesar.shift === 13 ? 'ROT13 / Caesar' : 'Caesar'; results.push({ name: name, confidence: 'Tinggi', details: `Shift=${bestCaesar.shift}`, result: bestCaesar.text }); }
                 let resultsHTML = '';
                 if (results.length > 0) {
-                    results.sort((a, b) => { const order = { 'Tinggi': 3, 'Sedang': 2, 'Rendah': 1 }; return (order[b.confidence] || 0) - (order[a.confidence] || 0); });
-                    resultsHTML = results.map(r => `<div class="border-t border-cyan-500/30 pt-3"><p class="font-bold">${r.name}</p><p class="text-sm text-slate-400">Keyakinan: <span class="text-cyan-400">${r.confidence}</span> // Detail: ${r.details}</p><p class="mt-1 p-2 bg-green-900/30 rounded text-green-300 break-words">>_ ${r.result}</p></div>`).join('');
-                } else { resultsHTML = '<p class="text-red-500">>_ Analisis Gagal.</p><p class="text-slate-400 text-sm mt-2">>_ Kemungkinan penyebab: Teks terlalu pendek, menggunakan enkripsi kompleks (misal: Vigenère), atau bukan enkripsi yang didukung.</p>'; }
+                    resultsHTML = results.map(r => `<div class="border-t border-gray-700 pt-3"><p class="font-bold font-sans text-gray-200">${r.name}</p><p class="text-sm text-gray-500 font-sans">Keyakinan: <span class="text-blue-400">${r.confidence}</span> | Detail: ${r.details}</p><p class="mt-1 p-2 bg-green-900/50 rounded text-green-400 break-words">${r.result}</p></div>`).join('');
+                } else { resultsHTML = '<p class="text-red-400">Analisis Gagal.</p><p class="text-gray-500 text-sm mt-2">Penyebab: Teks terlalu pendek, menggunakan enkripsi kompleks, atau bukan enkripsi yang didukung.</p>'; }
                 outputElement.innerHTML = resultsHTML;
             }, 500);
         }
 
         // --- Simulasi Serangan ---
-        let simulationInterval;
-
-        function stopSimulation() {
-            clearInterval(simulationInterval);
-            const attemptsEl = document.getElementById('attackAttempts'); const resultEl = document.getElementById('attackResult');
-            attemptsEl.innerHTML += `<span>\n>_ SIMULATION HALTED BY USER.</span>`;
-            attemptsEl.scrollTop = attemptsEl.scrollHeight;
-            resultEl.innerHTML = `<p class="text-yellow-500 font-bold">>_ SIMULASI DIHENTIKAN</p><p>Simulasi dihentikan secara manual oleh pengguna.</p>`;
-        }
-
-        function simulateAttack(type) {
-            clearInterval(simulationInterval);
-            const password = document.getElementById('passwordInput').value; const attemptsEl = document.getElementById('attackAttempts'); const resultEl = document.getElementById('attackResult');
-            if (!password) { resultEl.innerHTML = '<p class="text-red-500">>_ ERROR: Target password required.</p>'; return; }
-            attemptsEl.innerHTML = ''; resultEl.innerHTML = '<p class="text-cyan-400">>_ Initiating attack simulation...</p>';
-            if (type === 'dict') { simulateDictionaryAttack(password, attemptsEl, resultEl); } 
-            else if (type === 'algebraic') { simulateAlgebraicAttack(password, attemptsEl, resultEl); } 
-            else if (type === 'birthday') { simulateBirthdayAttack(password, attemptsEl, resultEl); }
-            else { simulateBruteForce(password, attemptsEl, resultEl); }
+        function stopAllSimulations() {
+            clearInterval(bruteForceInterval);
+            clearInterval(dictInterval);
+            clearTimeout(birthdayTimeout);
+            const attemptsEl = document.getElementById('attackAttempts');
+            if (attemptsEl && !attemptsEl.innerHTML.includes('DIHENTIKAN')) {
+                attemptsEl.innerHTML += `<span>\n>_ SIMULASI DIHENTIKAN.</span>`;
+            }
         }
         
-        function simulateBirthdayAttack(password, attemptsEl, resultEl) {
-            const charset = 'abcdefghijklmnopqrstuvwxyz0123456789'; const passwordLength = password.length; let attempts = 0; const maxAttempts = 5000; const generatedHashes = new Set();
-            attemptsEl.innerHTML = `<span>>_ Initiating Birthday Attack simulation...</span>\n<span>>_ Generating random strings to find collision...</span>\n`; resultEl.innerHTML = `<p class="text-cyan-400">>_ Searching for hash collision...</p>`;
-            simulationInterval = setInterval(() => {
-                if (attempts >= maxAttempts) { clearInterval(simulationInterval); resultEl.innerHTML = `<p class="text-yellow-500 font-bold">>_ SIMULATION HALTED</p><p>Tidak ada 'collision' atau kecocokan yang ditemukan dalam ${maxAttempts} percobaan.</p><p class="text-sm mt-2 text-slate-400"><b>Pelajaran:</b> Semakin panjang hash, semakin sulit menemukan 'collision'.</p>`; return; }
-                let randomString = '';
-                for (let i = 0; i < passwordLength; i++) { randomString += charset.charAt(Math.floor(Math.random() * charset.length)); }
-                attemptsEl.innerHTML += `<span>>_ Gen: "${randomString}"...</span>\n`; attemptsEl.scrollTop = attemptsEl.scrollHeight;
-                if (generatedHashes.has(randomString)) {
-                    clearInterval(simulationInterval);
-                    resultEl.innerHTML = `<p class="text-orange-500 font-bold">>_ COLLISION DETECTED!</p><p>Menemukan string duplikat ("${randomString}") setelah <strong>${attempts + 1}</strong> percobaan acak.</p><p class="text-sm mt-2 text-slate-400"><b>Pelajaran:</b> Paradoks 'Birthday' menunjukkan menemukan dua input dengan output yang sama lebih cepat daripada mencari satu input spesifik.</p>`;
-                } else if (randomString === password) {
-                    clearInterval(simulationInterval);
-                    resultEl.innerHTML = `<p class="text-red-500 font-bold">>_ TARGET COMPROMISED!</p><p>Kata sandi ditemukan secara acak dalam <strong>${attempts + 1}</strong> percobaan.</p>`;
-                } else { generatedHashes.add(randomString); attempts++; }
-            }, 30);
+        async function simulateAttack(type) {
+            stopAllSimulations();
+            const password = document.getElementById('passwordInput').value.trim().toLowerCase();
+            const attemptsEl = document.getElementById('attackAttempts');
+            const resultEl = document.getElementById('attackResult');
+            if (!password && type !== 'birthday') { 
+                resultEl.innerHTML = '<p class="text-red-400">ERROR: Target kata sandi dibutuhkan.</p>'; 
+                return; 
+            }
+            if (password.length > 5 && type !== 'birthday') {
+                resultEl.innerHTML = '<p class="text-red-400">ERROR: Panjang kata sandi maksimum adalah 5 karakter.</p>';
+                return;
+            }
+            attemptsEl.innerHTML = '';
+            resultEl.innerHTML = '<p class="text-blue-400">Memulai simulasi...</p>';
+
+            const bruteForceBtn = document.querySelector("#page-3 button[onclick=\"simulateAttack('brute')\"]");
+
+            if (type === 'brute') {
+                if (!pyodideReady) {
+                    bruteForceBtn.disabled = true;
+                    bruteForceBtn.textContent = 'Memuat Python...';
+                    await initPyodide();
+                    bruteForceBtn.disabled = false;
+                    bruteForceBtn.textContent = 'Brute-Force';
+                }
+                if (pyodideReady) {
+                    simulateBruteForce(password, attemptsEl, resultEl);
+                }
+            } else if (type === 'dict') { 
+                simulateDictionaryAttack(password, attemptsEl, resultEl); 
+            } else if (type === 'algebraic') { 
+                simulateAlgebraicAttack(attemptsEl, resultEl); 
+            } else if (type === 'birthday') { 
+                simulateBirthdayAttack(attemptsEl, resultEl); 
+            } else if (type === 'rainbow') { 
+                simulateRainbowAttack(password, attemptsEl, resultEl); 
+            }
+        }
+        
+        async function simulateRainbowAttack(password, attemptsEl, resultEl) {
+            // Contoh tabel pelangi yang diperluas
+            const rainbowTable = {
+                '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8': 'password',
+                '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5': '12345',
+                '5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729dc7a9b099b21': 'test',
+                '8d969eef6ecad3c29a3a629280e686016a3e1a6be17f3000676450c265e31742': 'admin',
+                '65e84be33532fb784c4812967676691c6b1275d263919c016e788b156b823519': 'qwerty',
+                '1ee19d554a3262ce46d926b484501a357f1396a848c081e6d6346766433a0b12': 'halo',
+                'e4a2d8e95088f1d392336307843d2230ed8b2e1e0a2944b20531c0e352d19b7d': 'sayang'
+            };
+            
+            attemptsEl.innerHTML = `<span>>_ Memulai serangan Rainbow Table...</span>\n`;
+            attemptsEl.innerHTML += `<span>>_ Mencari kecocokan hash dari database kata sandi umum...</span>\n`;
+            resultEl.innerHTML = `<p class="text-blue-400">Menganalisis hash target...</p>`;
+            
+            // Hash kata sandi input
+            const targetHash = await getSha256(password);
+            
+            attemptsEl.innerHTML += `<span>>_ Hash Target: ${targetHash.substring(0,20)}...</span>\n`;
+            attemptsEl.innerHTML += `<span>>_ Mencari hash di dalam tabel...</span>`;
+            attemptsEl.scrollTop = attemptsEl.scrollHeight;
+
+            // Simulasi pencarian instan
+            setTimeout(() => {
+                const foundPassword = rainbowTable[targetHash];
+                if (foundPassword) {
+                    resultEl.innerHTML = `<p class="text-red-400 font-bold">TARGET DITEMUKAN!</p><p>Hash ditemukan di tabel, kata sandi adalah: <strong>"${foundPassword}"</strong>.</p><p class="text-sm mt-2"><b>Pelajaran:</b> Kata sandi umum tidak aman bahkan jika di-hash.</p>`;
+                } else {
+                    resultEl.innerHTML = `<p class="text-green-400 font-bold">TARGET AMAN</p><p>Hash kata sandi Anda tidak ditemukan dalam tabel pelangi kami.</p>`;
+                }
+            }, 1000);
         }
 
-        function simulateAlgebraicAttack(password, attemptsEl, resultEl) {
-            attemptsEl.innerHTML = `<span>>_ Scanning for known algebraic vulnerabilities...</span>\n<span>>_ Checking for pattern: [char][char+1][position(char)]...</span>`;
-            resultEl.innerHTML = `<p class="text-cyan-400">>_ Analyzing password structure...</p>`;
-            setTimeout(() => {
-                let isVulnerable = false;
-                if (password.length === 3 && isNaN(password[0]) && isNaN(password[1]) && !isNaN(password[2])) {
-                     const firstCharCode = password.toLowerCase().charCodeAt(0); const secondCharCode = password.toLowerCase().charCodeAt(1); const expectedPosition = firstCharCode - 'a'.charCodeAt(0) + 1;
-                     if (secondCharCode === firstCharCode + 1 && parseInt(password[2]) === expectedPosition) { isVulnerable = true; }
+        async function simulateBirthdayAttack(attemptsEl, resultEl) {
+            const charset = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            const stringLength = 3; // Fixed length for collision search
+            let attempts = 0;
+            const maxAttempts = 5000;
+            const generatedHashMap = new Map();
+
+            attemptsEl.innerHTML = `<span>>_ Memulai Serangan Birthday...</span>\n<span>>_ Tujuan: Menemukan dua input berbeda yang menghasilkan hash yang sama.</span>\n`;
+            resultEl.innerHTML = `<p class="text-blue-400">Mencari tabrakan hash (collision)...</p>`;
+
+            function stopAfterTimeout() {
+                resultEl.innerHTML = `<p class="text-yellow-400 font-bold">SIMULASI SELESAI</p><p>Tidak ada tabrakan ditemukan dalam ${maxAttempts} percobaan. Coba lagi.</p>`;
+                stopAllSimulations();
+            }
+
+            // Set a timeout for the entire simulation
+            let simulationRunning = true; // Use a flag instead of just checking the timeout ID
+            const timeoutId = setTimeout(() => {
+                simulationRunning = false;
+                stopAfterTimeout();
+            }, 10000); // 10 seconds timeout
+
+            function attackStep() {
+                if (!simulationRunning) {
+                    return;
                 }
-                if (isVulnerable) { resultEl.innerHTML = `<p class="text-red-500 font-bold">>_ VULNERABILITY EXPLOITED!</p><p>Kata sandi cocok dengan pola matematika yang dapat diprediksi dan diselesaikan secara instan.</p><p class="text-sm mt-2 text-slate-400"><b>Pelajaran:</b> Kelemahan dalam algoritma atau sistem bisa lebih berbahaya daripada kata sandi yang lemah.</p>`; } 
-                else { resultEl.innerHTML = `<p class="text-green-400 font-bold">>_ NO VULNERABILITY FOUND</p><p>Kata sandi Anda tidak cocok dengan pola aljabar sederhana yang kami simulasikan.</p>`; }
+
+                let randomString = '';
+                for (let i = 0; i < stringLength; i++) {
+                    randomString += charset.charAt(Math.floor(Math.random() * charset.length));
+                }
+                
+                attempts++;
+
+                getSha256(randomString).then(randomHash => {
+                    if (generatedHashMap.has(randomHash)) {
+                        const originalString = generatedHashMap.get(randomHash);
+                        // Pastikan stringnya berbeda
+                        if (originalString !== randomString) {
+                            resultEl.innerHTML = `<p class="text-orange-400 font-bold">TABRAKAN HASH DITEMUKAN!</p>
+                                    <p>Ditemukan setelah <strong>${attempts}</strong> percobaan.</p>
+                                    <p class="mt-2 text-sm font-sans">Input 1: <b>"${originalString}"</b></p>
+                                    <p class="text-sm font-sans">Input 2: <b>"${randomString}"</b></p>
+                                    <p class="mt-1 text-sm font-mono">Keduanya menghasilkan hash yang sama: ${randomHash.substring(0, 20)}...</p>`;
+                            simulationRunning = false;
+                            clearTimeout(timeoutId); // Clear the timeout since we found a collision
+                            stopAllSimulations(); // Stop all intervals/timeouts
+                            return;
+                        }
+                    }
+
+                    generatedHashMap.set(randomHash, randomString);
+                    attemptsEl.innerHTML += `<span>>_ Mencoba: "${randomString}" -> HASH: ${randomHash.substring(0, 10)}...</span>\n`;
+                    attemptsEl.scrollTop = attemptsEl.scrollHeight;
+
+                    // Lanjutkan jika belum ditemukan
+                    if (simulationRunning && attempts < maxAttempts) {
+                        setTimeout(attackStep, 50);
+                    }
+                }).catch(error => {
+                    console.error("Error during hashing:", error);
+                    attemptsEl.innerHTML += `<span>>_ ERROR: Gagal membuat hash.</span>\n`;
+                    simulationRunning = false;
+                    clearTimeout(timeoutId);
+                    stopAllSimulations();
+                });
+            }
+            attackStep();
+        }
+
+        function simulateAlgebraicAttack(attemptsEl, resultEl) {
+            attemptsEl.innerHTML = `<span>>_ Menganalisis algoritma secara matematis...</span>\n<span>>_ Serangan ini tidak dapat disimulasikan secara visual.</span>`;
+            resultEl.innerHTML = `<p class="text-blue-400">Menganalisis struktur kata sandi...</p>`;
+            setTimeout(() => {
+                resultEl.innerHTML = `<p class="text-green-400 font-bold">INFO</p><p>Serangan aljabar mengeksploitasi kelemahan matematis internal dalam algoritma enkripsi itu sendiri, bukan pada kata sandi pengguna. Ini adalah serangan teoritis yang sangat canggih dan tidak relevan untuk kata sandi sehari-hari.</p>`;
             }, 1000);
         }
 
         function simulateDictionaryAttack(password, attemptsEl, resultEl) {
-            const dictionary = ['password', '123456', 'qwerty', 'admin', 'rahasia', 'cinta', 'sayang', '12345', 'test', 'user']; let attempts = 0; let found = false;
-            simulationInterval = setInterval(() => {
-                if (attempts >= dictionary.length) { clearInterval(simulationInterval); if (!found) { resultEl.innerHTML = `<p class="text-green-400 font-bold">>_ TARGET NOT FOUND</p><p>Password tidak ditemukan di kamus umum.</p>`; } return; }
-                const currentGuess = dictionary[attempts]; attemptsEl.innerHTML += `<span>>_ Trying: "${currentGuess}"...</span>\n`; attemptsEl.scrollTop = attemptsEl.scrollHeight;
-                if (currentGuess === password.toLowerCase()) { found = true; clearInterval(simulationInterval); resultEl.innerHTML = `<p class="text-red-500 font-bold">>_ TARGET COMPROMISED!</p><p>Ditemukan dalam <strong>${attempts + 1}</strong> percobaan.</p>`; }
+            const dictionary = ['12345', 'qwerty', 'password', 'admin', 'rahasia', 'test', 'saya', 'katasandi', 'komputer', 'google', 'user', '12345678'];
+            let attempts = 0; 
+            let found = false;
+            
+            attemptsEl.innerHTML = `<span>>_ Memulai serangan Kamus...</span>\n<span>>_ Database Kamus: ${dictionary.length} kata.</span>\n`;
+            
+            dictInterval = setInterval(() => {
+                if (attempts >= dictionary.length) { 
+                    clearInterval(dictInterval); 
+                    if (!found) { 
+                        resultEl.innerHTML = `<p class="text-green-400 font-bold">TARGET TIDAK DITEMUKAN</p><p>Kata sandi tidak ada di kamus simulasi.</p>`; 
+                    } 
+                    return; 
+                }
+                const currentGuess = dictionary[attempts]; 
+                attemptsEl.innerHTML += `<span>>_ Mencoba: "${currentGuess}"...</span>\n`; 
+                attemptsEl.scrollTop = attemptsEl.scrollHeight;
+                
+                if (currentGuess.toLowerCase() === password.toLowerCase()) { 
+                    found = true; 
+                    clearInterval(dictInterval); 
+                    resultEl.innerHTML = `<p class="text-red-400 font-bold">TARGET DITEMUKAN!</p><p>Ditemukan dalam <strong>${attempts + 1}</strong> percobaan.</p>`; 
+                }
                 attempts++;
             }, 150);
         }
+        
+        async function simulateBruteForce(password, attemptsEl, resultEl) {
+            attemptsEl.innerHTML = `<span>>_ Memulai serangan Brute-Force (Python)...</span>\n<span>>_ Menghitung kombinasi, silakan tunggu...</span>\n`;
+            
+            const python_func = pyodide.globals.get('simulate_brute_force_py');
+            const result = python_func(password, 5);
+            
+            const guesses = result.get('guesses').toJs({dict_converter: Object.fromEntries});
+            let attemptCount = 0;
 
-        function simulateBruteForce(password, attemptsEl, resultEl) {
-            const charset = 'abcdefghijklmnopqrstuvwxyz'; let currentGuess = ''; let attempts = 0; const maxAttempts = 3000;
-            function nextGuess(guess) {
-                let i = guess.length - 1;
-                while (i >= 0) { const charIndex = charset.indexOf(guess[i]); if (charIndex < charset.length - 1) { return guess.slice(0, i) + charset[charIndex + 1] + 'a'.repeat(guess.length - 1 - i); } i--; }
-                return 'a'.repeat(guess.length + 1);
-            }
-            currentGuess = 'a';
-            simulationInterval = setInterval(() => {
-                if (attempts >= maxAttempts || currentGuess.length > password.length + 1) { clearInterval(simulationInterval); resultEl.innerHTML = `<p class="text-yellow-500 font-bold">>_ SIMULATION HALTED</p><p>Berhenti setelah ${maxAttempts} percobaan. Target cukup kuat.</p>`; return; }
-                attemptsEl.innerHTML += `<span>>_ Trying: "${currentGuess}"...</span>\n`; attemptsEl.scrollTop = attemptsEl.scrollHeight;
-                if (currentGuess === password) { clearInterval(simulationInterval); resultEl.innerHTML = `<p class="text-red-500 font-bold">>_ TARGET COMPROMISED!</p><p>Ditemukan dalam <strong>${attempts + 1}</strong> percobaan simulasi.</p>`; } 
-                else { currentGuess = nextGuess(currentGuess); attempts++; }
-            }, 20);
+            bruteForceInterval = setInterval(() => {
+                if (attemptCount >= guesses.length) {
+                    clearInterval(bruteForceInterval);
+                    attemptsEl.innerHTML += `<span>>_ Pencarian selesai. Target tidak ditemukan.</span>`;
+                    resultEl.innerHTML = `<p class="text-green-400 font-bold">TARGET AMAN</p><p>Kata sandi tidak ditemukan dalam kombinasi yang dicoba.</p>`;
+                    return;
+                }
+
+                const guess = guesses[attemptCount];
+                attemptsEl.innerHTML += `<span>>_ Mencoba: "${guess}"...</span>\n`;
+                attemptsEl.scrollTop = attemptsEl.scrollHeight;
+
+                if (guess === password) {
+                    clearInterval(bruteForceInterval);
+                    attemptsEl.innerHTML += `<span>>_ Ditemukan! Menghasilkan ${attemptCount + 1} percobaan.</span>`;
+                    resultEl.innerHTML = `<p class="text-red-400 font-bold">TARGET DITEMUKAN!</p><p>Ditemukan dalam <strong>${attemptCount + 1}</strong> percobaan. Kata sandi adalah: <strong>"${password}"</strong>.</p>`;
+                    return;
+                }
+                attemptCount++;
+            }, 10); // Adjust delay for speed
         }
+
+        // Initialize Pyodide on page load
+        window.onload = initPyodide;
     </script>
 </body>
 </html>
-
